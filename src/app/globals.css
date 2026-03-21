@@ -1,18 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-hp-navy: #0F2B46;
-  --color-hp-blue: #2E86C1;
-  --color-hp-blue-light: #D6EAF8;
-  --color-hp-teal: #0E6655;
-  --color-hp-teal-light: #D5F5E3;
-  --color-hp-coral: #C0392B;
-  --color-hp-coral-light: #FADBD8;
-  --color-hp-amber: #B7950B;
+  --color-hp-navy: #0A2540;
+  --color-hp-blue: #1A73B5;
+  --color-hp-blue-mid: #2B8FD4;
+  --color-hp-blue-light: #E8F4FD;
+  --color-hp-blue-pale: #F0F7FC;
+  --color-hp-green: #16A085;
+  --color-hp-green-light: #E8F8F5;
+  --color-hp-green-dark: #0E7C62;
+  --color-hp-coral: #E74C3C;
+  --color-hp-coral-light: #FDEDEC;
+  --color-hp-amber: #F39C12;
   --color-hp-amber-light: #FEF9E7;
-  --color-hp-gray: #5D6D7E;
-  --color-hp-light: #F8F9FA;
-  --color-hp-dark: #1C2833;
+  --color-hp-gray: #64748B;
+  --color-hp-gray-light: #94A3B8;
+  --color-hp-light: #F8FAFC;
+  --color-hp-dark: #0F172A;
+  --color-hp-white: #FFFFFF;
 
   --font-display: "Instrument Serif", Georgia, serif;
   --font-body: "DM Sans", system-ui, sans-serif;
@@ -24,27 +29,31 @@ body {
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-fade-up {
-  animation: fade-up 0.6s ease-out both;
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
 }
-.animate-fade-up-delay-1 {
-  animation: fade-up 0.6s ease-out 0.1s both;
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(22, 160, 133, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(22, 160, 133, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(22, 160, 133, 0); }
 }
-.animate-fade-up-delay-2 {
-  animation: fade-up 0.6s ease-out 0.2s both;
-}
-.animate-fade-up-delay-3 {
-  animation: fade-up 0.6s ease-out 0.3s both;
-}
-.animate-pulse-soft {
-  animation: pulse-soft 3s ease-in-out infinite;
-}
+
+.animate-fade-up { animation: fade-up 0.7s ease-out both; }
+.animate-fade-up-1 { animation: fade-up 0.7s ease-out 0.1s both; }
+.animate-fade-up-2 { animation: fade-up 0.7s ease-out 0.2s both; }
+.animate-fade-up-3 { animation: fade-up 0.7s ease-out 0.3s both; }
+.animate-fade-up-4 { animation: fade-up 0.7s ease-out 0.4s both; }
+.animate-fade-in { animation: fade-in 0.5s ease-out both; }
+.animate-slide-right { animation: slide-in-right 0.5s ease-out both; }
+.animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }

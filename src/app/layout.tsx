@@ -4,8 +4,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "HealthPing — Tu ping a la salud",
   description:
-    "Describe tu síntoma, compara hospitales con precios reales y agenda tu cita en minutos. Marketplace de servicios hospitalarios en Jalisco.",
-  keywords: ["hospitales", "salud", "Jalisco", "Guadalajara", "citas médicas", "comparador", "precios"],
+    "Te ayudamos a decidir a qué hospital ir y cuánto podría costarte. Compara hospitales, revisa seguro y da seguimiento a tu cuenta mientras te atienden.",
+  keywords: ["hospitales", "salud", "Jalisco", "Guadalajara", "urgencias", "comparador", "precios", "emergencias"],
   openGraph: {
     title: "HealthPing — Tu ping a la salud",
     description: "Compara hospitales, conoce precios y agenda citas en minutos.",
@@ -28,7 +28,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-hp-light antialiased">{children}</body>
+      <body className="bg-hp-white antialiased">{children}</body>
     </html>
   );
 }
