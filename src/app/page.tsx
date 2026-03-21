@@ -1,18 +1,19 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import HospitalMap from "@/components/HospitalMap";
 
 /* ═══════ MOCK DATA ═══════ */
 
 const BODY_ZONES = [
-  { id: "head", label: "Cabeza", emoji: "🧠" },
-  { id: "chest", label: "Pecho", emoji: "🫁" },
-  { id: "abdomen", label: "Abdomen", emoji: "🫃" },
-  { id: "back", label: "Espalda", emoji: "🦴" },
-  { id: "limbs", label: "Extremidades", emoji: "💪" },
-  { id: "throat", label: "Garganta", emoji: "🗣️" },
-  { id: "skin", label: "Piel", emoji: "🩹" },
-  { id: "general", label: "Malestar general", emoji: "🤒" },
+  { id: "head", label: "Cabeza", emoji: "🧠", needs: ["CONSULTATION", "IMAGING"] },
+  { id: "chest", label: "Pecho", emoji: "🫁", needs: ["EMERGENCY", "IMAGING", "LAB"] },
+  { id: "abdomen", label: "Abdomen", emoji: "🫃", needs: ["EMERGENCY", "SURGERY", "IMAGING", "LAB"] },
+  { id: "back", label: "Espalda", emoji: "🦴", needs: ["CONSULTATION", "IMAGING"] },
+  { id: "limbs", label: "Extremidades", emoji: "💪", needs: ["EMERGENCY", "IMAGING"] },
+  { id: "throat", label: "Garganta", emoji: "🗣️", needs: ["CONSULTATION", "LAB"] },
+  { id: "skin", label: "Piel", emoji: "🩹", needs: ["CONSULTATION"] },
+  { id: "general", label: "Malestar general", emoji: "🤒", needs: ["CONSULTATION", "LAB"] },
 ];
 
 const EXTRA_SYMPTOMS = [
@@ -27,13 +28,18 @@ const SINCE_OPTIONS = [
   { id: "days", label: "Varios días" },
 ];
 
+type ServiceCat = "EMERGENCY" | "CONSULTATION" | "SURGERY" | "LAB" | "IMAGING";
+
 const MOCK_HOSPITALS = [
   {
     id: 1, name: "Hospital San Javier", level: "THIRD",
     lat: 20.6767, lng: -103.3812,
     anticipoRange: "$8,000 - $15,000", costoInicial: "$2,500 - $6,000",
     waitTime: "~15 min", rating: 4.6, urgenciasOpen: true,
-    acceptsInsurance: true, transparency: 4,
+    acceptsInsurance: true,
+    insurers: ["GNP", "AXA", "Metlife", "Seguros Monterrey"],
+    transparency: 4,
+    serviceCategories: ["EMERGENCY", "SURGERY", "LAB", "IMAGING", "CONSULTATION"] as ServiceCat[],
     services: ["Urgencias 24h", "Cirugía", "Lab", "Imagen"],
     isPremium: true,
     desglose: [
@@ -52,7 +58,10 @@ const MOCK_HOSPITALS = [
     lat: 20.6700, lng: -103.3650,
     anticipoRange: "$5,000 - $10,000", costoInicial: "$1,800 - $4,000",
     waitTime: "~25 min", rating: 4.3, urgenciasOpen: true,
-    acceptsInsurance: true, transparency: 3,
+    acceptsInsurance: true,
+    insurers: ["GNP", "AXA", "BUPA"],
+    transparency: 3,
+    serviceCategories: ["EMERGENCY", "CONSULTATION", "LAB"] as ServiceCat[],
     services: ["Urgencias 24h", "Consulta", "Lab"],
     isPremium: false,
     desglose: [
@@ -69,7 +78,10 @@ const MOCK_HOSPITALS = [
     lat: 20.7050, lng: -103.4100,
     anticipoRange: "$12,000 - $25,000", costoInicial: "$4,000 - $8,000",
     waitTime: "~10 min", rating: 4.8, urgenciasOpen: true,
-    acceptsInsurance: true, transparency: 5,
+    acceptsInsurance: true,
+    insurers: ["GNP", "AXA", "Metlife", "Seguros Monterrey", "Zurich", "BUPA", "Allianz"],
+    transparency: 5,
+    serviceCategories: ["EMERGENCY", "SURGERY", "LAB", "IMAGING", "CONSULTATION"] as ServiceCat[],
     services: ["Urgencias 24h", "Cirugía", "UCI", "Lab", "Imagen"],
     isPremium: true,
     desglose: [
@@ -89,7 +101,10 @@ const MOCK_HOSPITALS = [
     lat: 20.6600, lng: -103.3500,
     anticipoRange: "$3,000 - $6,000", costoInicial: "$800 - $2,000",
     waitTime: "~35 min", rating: 4.1, urgenciasOpen: false,
-    acceptsInsurance: false, transparency: 2,
+    acceptsInsurance: false,
+    insurers: [],
+    transparency: 2,
+    serviceCategories: ["CONSULTATION", "LAB"] as ServiceCat[],
     services: ["Consulta", "Lab básico"],
     isPremium: false,
     desglose: [
@@ -124,9 +139,7 @@ function LevelBadge({ level }: { level: string }) {
 function Dots({ level }: { level: number }) {
   return (
     <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className={`w-2 h-2 rounded-full ${i <= level ? "bg-hp-green" : "bg-gray-200"}`} />
-      ))}
+      {[1, 2, 3, 4, 5].map((i) => <div key={i} className={`w-2 h-2 rounded-full ${i <= level ? "bg-hp-green" : "bg-gray-200"}`} />)}
     </div>
   );
 }
@@ -144,12 +157,12 @@ export default function Home() {
   const [sortBy, setSortBy] = useState("distance");
   const [expandedHospital, setExpandedHospital] = useState<number | null>(null);
   const [insuranceFilter, setInsuranceFilter] = useState(false);
+  const [convenioFilter, setConvenioFilter] = useState(false);
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
 
-  // Appointment form
   const [apptName, setApptName] = useState("");
   const [apptEmail, setApptEmail] = useState("");
   const [apptPhone, setApptPhone] = useState("");
@@ -169,18 +182,32 @@ export default function Home() {
     );
   }, []);
 
-  const hospitalsWithDistance = MOCK_HOSPITALS.map((h) => ({
-    ...h,
-    distanceKm: userLat && userLng ? getDistance(userLat, userLng, h.lat, h.lng) : null,
-  }));
+  // Get needed service categories based on symptom selection
+  const neededServices: ServiceCat[] = selectedZone
+    ? (BODY_ZONES.find((z) => z.id === selectedZone)?.needs as ServiceCat[]) || []
+    : [];
 
-  const filtered = hospitalsWithDistance.filter((h) => (!insuranceFilter || h.acceptsInsurance));
+  // Enrich hospitals with distance and match score
+  const enriched = MOCK_HOSPITALS.map((h) => {
+    const distanceKm = userLat && userLng ? getDistance(userLat, userLng, h.lat, h.lng) : null;
+    const matchCount = neededServices.filter((s) => h.serviceCategories.includes(s)).length;
+    const canServe = neededServices.length === 0 || matchCount > 0;
+    return { ...h, distanceKm, matchCount, canServe };
+  });
 
+  // Filter
+  const filtered = enriched
+    .filter((h) => h.canServe)
+    .filter((h) => !insuranceFilter || h.acceptsInsurance)
+    .filter((h) => !convenioFilter || h.isPremium);
+
+  // Sort
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "distance" && a.distanceKm !== null && b.distanceKm !== null) return a.distanceKm - b.distanceKm;
     if (sortBy === "cost") return parseInt(a.costoInicial.replace(/\D/g, "")) - parseInt(b.costoInicial.replace(/\D/g, ""));
     if (sortBy === "rating") return b.rating - a.rating;
     if (sortBy === "transparency") return b.transparency - a.transparency;
+    if (sortBy === "cost-desc") return parseInt(b.costoInicial.replace(/\D/g, "")) - parseInt(a.costoInicial.replace(/\D/g, ""));
     return 0;
   });
 
@@ -188,28 +215,24 @@ export default function Home() {
 
   const handleAppointment = async () => {
     if (!apptName || !apptEmail || !apptPhone || !selectedHospitalId) return;
-    setApptSending(true);
-    setApptError(null);
+    setApptSending(true); setApptError(null);
     try {
       const res = await fetch("/api/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          hospitalName: selectedHospital?.name,
-          patientName: apptName,
-          patientEmail: apptEmail,
-          patientPhone: apptPhone,
-          symptomDescription: apptDesc || selectedZone || "No especificado",
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hospitalName: selectedHospital?.name, patientName: apptName, patientEmail: apptEmail, patientPhone: apptPhone, symptomDescription: apptDesc || selectedZone || "No especificado" }),
       });
       const data = await res.json();
-      if (data.code) { setApptCode(data.code); }
-      else { setApptError(data.error || "Error al crear cita"); }
+      if (data.code) setApptCode(data.code);
+      else setApptError(data.error || "Error al crear cita");
     } catch { setApptError("Error de conexión"); }
     setApptSending(false);
   };
 
-  /* ═══════ RENDER ═══════ */
+  const handleMapSelect = useCallback((id: number) => {
+    setExpandedHospital(id);
+    document.getElementById(`hospital-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
+
   return (
     <main className="min-h-screen">
       {/* Nav */}
@@ -219,16 +242,12 @@ export default function Home() {
             <div className="w-8 h-8 rounded-lg bg-hp-navy flex items-center justify-center group-hover:bg-hp-blue transition-colors">
               <span className="text-white text-sm font-bold tracking-tight">HP</span>
             </div>
-            <span className="font-[family-name:var(--font-display)] text-lg text-hp-navy">
-              Health<span className="text-hp-green">Ping</span>
-            </span>
+            <span className="font-[family-name:var(--font-display)] text-lg text-hp-navy">Health<span className="text-hp-green">Ping</span></span>
           </button>
           <div className="hidden sm:flex items-center gap-5 text-sm">
             <a href="/verificar" className="text-hp-gray hover:text-hp-navy transition-colors">Verificar cita</a>
             <a href="/hospital" className="text-hp-gray hover:text-hp-navy transition-colors">Dashboard</a>
-            <a href="/convenio" className="bg-hp-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-hp-green-dark transition-colors">
-              Soy hospital
-            </a>
+            <a href="/convenio" className="bg-hp-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-hp-green-dark transition-colors">Soy hospital</a>
           </div>
         </div>
       </nav>
@@ -255,55 +274,31 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 animate-fade-up-3">
                   <button onClick={() => setScreen("symptoms")} className="flex items-center justify-center gap-3 bg-hp-navy text-white px-7 py-4 rounded-2xl font-semibold text-base hover:bg-hp-navy/90 transition-all hover:shadow-lg hover:shadow-hp-navy/10">
-                    <span className="w-3 h-3 rounded-full bg-hp-coral animate-pulse-ring" />
-                    Me siento mal ahora
+                    <span className="w-3 h-3 rounded-full bg-hp-coral animate-pulse-ring" />Me siento mal ahora
                   </button>
                   <button onClick={() => setScreen("results")} className="flex items-center justify-center gap-3 bg-white border-2 border-gray-200 text-hp-dark px-7 py-4 rounded-2xl font-semibold text-base hover:border-hp-blue hover:text-hp-blue transition-all">
                     Solo quiero comparar hospitales
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3 mt-6 animate-fade-up-4">
-                  <button
-                    onClick={requestLocation}
-                    className={`text-xs px-3 py-1.5 rounded-full border flex items-center gap-1.5 transition-colors ${
-                      geoStatus === "done" ? "bg-hp-green-light border-hp-green text-hp-green" :
-                      geoStatus === "loading" ? "bg-hp-blue-light border-hp-blue text-hp-blue" :
-                      geoStatus === "error" ? "bg-hp-coral-light border-hp-coral text-hp-coral" :
-                      "bg-white/80 border-gray-200 text-hp-gray hover:border-hp-blue hover:text-hp-blue"
-                    }`}
-                  >
+                  <button onClick={requestLocation}
+                    className={`text-xs px-3 py-1.5 rounded-full border flex items-center gap-1.5 transition-colors ${geoStatus === "done" ? "bg-hp-green-light border-hp-green text-hp-green" : geoStatus === "loading" ? "bg-hp-blue-light border-hp-blue text-hp-blue" : geoStatus === "error" ? "bg-hp-coral-light border-hp-coral text-hp-coral" : "bg-white/80 border-gray-200 text-hp-gray hover:border-hp-blue hover:text-hp-blue"}`}>
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {geoStatus === "done" ? "Ubicación activada ✓" :
-                     geoStatus === "loading" ? "Obteniendo..." :
-                     geoStatus === "error" ? "No disponible" :
-                     "Usar mi ubicación"}
+                    {geoStatus === "done" ? "Ubicación activada ✓" : geoStatus === "loading" ? "Obteniendo..." : geoStatus === "error" ? "No disponible" : "Usar mi ubicación"}
                   </button>
-                  <button
-                    onClick={() => setInsuranceFilter(!insuranceFilter)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      insuranceFilter ? "bg-hp-green-light border-hp-green text-hp-green" : "bg-white/80 border-gray-200 text-hp-gray hover:border-hp-green hover:text-hp-green"
-                    }`}
-                  >
+                  <button onClick={() => setInsuranceFilter(!insuranceFilter)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${insuranceFilter ? "bg-hp-green-light border-hp-green text-hp-green" : "bg-white/80 border-gray-200 text-hp-gray hover:border-hp-green hover:text-hp-green"}`}>
                     {insuranceFilter ? "Seguro: filtrado ✓" : "Tengo seguro"}
                   </button>
                 </div>
               </div>
               <div className="mt-16 grid grid-cols-3 gap-6 max-w-sm">
-                {[
-                  { value: "434+", label: "Hospitales en Jalisco" },
-                  { value: "<2s", label: "Tiempo de respuesta" },
-                  { value: "$0", label: "Costo para ti" },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <p className="font-[family-name:var(--font-display)] text-2xl text-hp-navy">{s.value}</p>
-                    <p className="text-[11px] text-hp-gray mt-1">{s.label}</p>
-                  </div>
+                {[{ value: "434+", label: "Hospitales en Jalisco" }, { value: "<2s", label: "Tiempo de respuesta" }, { value: "$0", label: "Costo para ti" }].map((s) => (
+                  <div key={s.label}><p className="font-[family-name:var(--font-display)] text-2xl text-hp-navy">{s.value}</p><p className="text-[11px] text-hp-gray mt-1">{s.label}</p></div>
                 ))}
               </div>
             </div>
           </section>
-
-          {/* How it works */}
           <section id="como-funciona" className="py-20 px-5 bg-white">
             <div className="max-w-6xl mx-auto">
               <p className="text-xs font-semibold text-hp-green tracking-widest uppercase mb-3">Cómo funciona</p>
@@ -311,8 +306,8 @@ export default function Home() {
               <div className="grid sm:grid-cols-3 gap-10">
                 {[
                   { step: "01", title: "Describe qué sientes", desc: "Selecciona la zona, intensidad y síntomas extra. Sin formularios largos.", color: "bg-hp-blue-light text-hp-blue" },
-                  { step: "02", title: "Compara hospitales", desc: "Precios estimados, tiempos de espera, transparencia y si aceptan tu seguro.", color: "bg-hp-green-light text-hp-green" },
-                  { step: "03", title: "Agenda y llega preparado", desc: "Solicita cita sin registro. Recibe confirmación por correo con tu código.", color: "bg-hp-blue-light text-hp-navy" },
+                  { step: "02", title: "Compara hospitales", desc: "Solo ves los que pueden atenderte. Precios, seguros, transparencia y mapa.", color: "bg-hp-green-light text-hp-green" },
+                  { step: "03", title: "Agenda y llega preparado", desc: "Solicita cita sin registro. Confirmación por correo con código.", color: "bg-hp-blue-light text-hp-navy" },
                 ].map((item) => (
                   <div key={item.step}>
                     <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${item.color} font-bold text-base mb-4`}>{item.step}</div>
@@ -323,16 +318,13 @@ export default function Home() {
               </div>
             </div>
           </section>
-
-          {/* CTA Hospital */}
           <section className="py-20 px-5 bg-hp-navy">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="font-[family-name:var(--font-display)] text-3xl text-white mb-4">¿Eres hospital o clínica?</h2>
-              <p className="text-white/50 max-w-md mx-auto mb-8 text-sm">Únete como hospital convenio. Recibe pacientes cualificados desde tu dashboard.</p>
+              <p className="text-white/50 max-w-md mx-auto mb-8 text-sm">Únete como hospital convenio.</p>
               <a href="/convenio" className="inline-block bg-hp-green text-white px-8 py-3 rounded-xl font-semibold hover:bg-hp-green-dark transition-colors">Quiero ser convenio</a>
             </div>
           </section>
-
           <footer className="py-8 px-5 bg-hp-light border-t border-gray-100">
             <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
               <span className="text-xs text-hp-gray">HealthPing — Tu ping a la salud</span>
@@ -346,14 +338,9 @@ export default function Home() {
       {screen === "symptoms" && (
         <section className="pt-20 pb-16 px-5 min-h-screen bg-hp-light">
           <div className="max-w-lg mx-auto">
-            <div className="flex gap-1.5 mb-8 mt-4">
-              <div className="h-1 flex-1 rounded-full bg-hp-green" />
-              <div className="h-1 flex-1 rounded-full bg-gray-200" />
-              <div className="h-1 flex-1 rounded-full bg-gray-200" />
-            </div>
+            <div className="flex gap-1.5 mb-8 mt-4"><div className="h-1 flex-1 rounded-full bg-hp-green" /><div className="h-1 flex-1 rounded-full bg-gray-200" /><div className="h-1 flex-1 rounded-full bg-gray-200" /></div>
             <h2 className="font-[family-name:var(--font-display)] text-2xl text-hp-navy mb-1">¿Qué sientes?</h2>
             <p className="text-sm text-hp-gray mb-8">Selecciona rápido, sin formularios largos.</p>
-
             <div className="mb-8">
               <p className="text-sm font-medium text-hp-dark mb-3">¿Dónde te duele?</p>
               <div className="grid grid-cols-4 gap-2">
@@ -366,7 +353,6 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-medium text-hp-dark">¿Qué tan fuerte?</p>
@@ -377,7 +363,6 @@ export default function Home() {
                 style={{ background: "linear-gradient(to right, #16A085 0%, #F39C12 50%, #E74C3C 100%)" }} />
               <div className="flex justify-between text-[10px] text-hp-gray mt-1"><span>Leve</span><span>Moderado</span><span>Intenso</span></div>
             </div>
-
             <div className="mb-8">
               <p className="text-sm font-medium text-hp-dark mb-3">¿Qué más sientes?</p>
               <div className="flex flex-wrap gap-2">
@@ -389,7 +374,6 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
             <div className="mb-10">
               <p className="text-sm font-medium text-hp-dark mb-3">¿Desde cuándo?</p>
               <div className="grid grid-cols-2 gap-2">
@@ -401,8 +385,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
-            <button onClick={() => setScreen("results")} disabled={!selectedZone}
+            <button onClick={() => { if (!geoStatus.match(/done/)) requestLocation(); setScreen("results"); }} disabled={!selectedZone}
               className="w-full bg-hp-navy text-white py-4 rounded-2xl font-semibold text-base hover:bg-hp-navy/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               Ver opciones cercanas
             </button>
@@ -415,51 +398,59 @@ export default function Home() {
       {screen === "results" && !apptCode && (
         <section className="pt-20 pb-16 px-5 min-h-screen bg-hp-light">
           <div className="max-w-3xl mx-auto">
-            {/* Urgency banner */}
             {isUrgent ? (
-              <div className="bg-hp-coral-light border border-hp-coral/20 rounded-2xl p-4 mb-6 mt-4 animate-fade-up">
+              <div className="bg-hp-coral-light border border-hp-coral/20 rounded-2xl p-4 mb-5 mt-4 animate-fade-up">
                 <div className="flex items-start gap-3">
-                  <span className="w-8 h-8 rounded-full bg-hp-coral flex items-center justify-center flex-shrink-0 mt-0.5"><span className="text-white text-sm font-bold">!</span></span>
-                  <div>
-                    <p className="font-semibold text-hp-coral text-sm">Sí conviene que te atiendan hoy.</p>
-                    <p className="text-xs text-hp-gray mt-1">Te recomendamos ir a urgencias lo antes posible.</p>
-                  </div>
+                  <span className="w-8 h-8 rounded-full bg-hp-coral flex items-center justify-center flex-shrink-0"><span className="text-white text-sm font-bold">!</span></span>
+                  <div><p className="font-semibold text-hp-coral text-sm">Sí conviene que te atiendan hoy.</p><p className="text-xs text-hp-gray mt-1">Te recomendamos ir a urgencias lo antes posible.</p></div>
                 </div>
               </div>
             ) : (
-              <div className="bg-hp-green-light border border-hp-green/20 rounded-2xl p-4 mb-6 mt-4 animate-fade-up">
+              <div className="bg-hp-green-light border border-hp-green/20 rounded-2xl p-4 mb-5 mt-4 animate-fade-up">
                 <div className="flex items-start gap-3">
-                  <span className="w-8 h-8 rounded-full bg-hp-green flex items-center justify-center flex-shrink-0 mt-0.5"><span className="text-white text-sm">✓</span></span>
-                  <div>
-                    <p className="font-semibold text-hp-green-dark text-sm">Tu caso parece moderado.</p>
-                    <p className="text-xs text-hp-gray mt-1">Compara precios, distancia y transparencia.</p>
-                  </div>
+                  <span className="w-8 h-8 rounded-full bg-hp-green flex items-center justify-center flex-shrink-0"><span className="text-white text-sm">✓</span></span>
+                  <div><p className="font-semibold text-hp-green-dark text-sm">Tu caso parece moderado.</p><p className="text-xs text-hp-gray mt-1">Compara opciones con calma.</p></div>
                 </div>
               </div>
             )}
 
-            <div className="flex items-end justify-between mb-5">
+            {/* MAP */}
+            <div className="mb-5 animate-fade-up-1">
+              <HospitalMap hospitals={sorted.map((h) => ({ id: h.id, name: h.name, lat: h.lat, lng: h.lng, isPremium: h.isPremium, level: h.level, anticipoRange: h.anticipoRange }))} userLat={userLat} userLng={userLng} onSelectHospital={handleMapSelect} />
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-end justify-between mb-5 animate-fade-up-2">
               <div>
                 <h2 className="font-[family-name:var(--font-display)] text-2xl text-hp-navy">Hospitales disponibles</h2>
-                <p className="text-xs text-hp-gray mt-1">{sorted.length} opciones{userLat ? " cerca de ti" : ""}{insuranceFilter ? " con seguro" : ""}</p>
+                <p className="text-xs text-hp-gray mt-1">
+                  {sorted.length} de {MOCK_HOSPITALS.length} pueden atenderte
+                  {neededServices.length > 0 && <span className="text-hp-green font-medium"> (filtrado por servicios)</span>}
+                </p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => setInsuranceFilter(!insuranceFilter)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${insuranceFilter ? "bg-hp-green-light border-hp-green text-hp-green" : "border-gray-200 bg-white text-hp-gray"}`}>
-                  {insuranceFilter ? "Seguro ✓" : "Seguro"}
-                </button>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white">
-                  <option value="distance">Cercanía</option>
-                  <option value="cost">Costo</option>
-                  <option value="rating">Calificación</option>
-                  <option value="transparency">Transparencia</option>
-                </select>
-              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button onClick={() => setInsuranceFilter(!insuranceFilter)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${insuranceFilter ? "bg-hp-green-light border-hp-green text-hp-green" : "border-gray-200 bg-white text-hp-gray"}`}>
+                {insuranceFilter ? "Con seguro ✓" : "Con seguro"}
+              </button>
+              <button onClick={() => setConvenioFilter(!convenioFilter)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${convenioFilter ? "bg-hp-green-light border-hp-green text-hp-green" : "border-gray-200 bg-white text-hp-gray"}`}>
+                {convenioFilter ? "Solo convenio ✓" : "Solo convenio"}
+              </button>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-xs border border-gray-200 rounded-full px-3 py-1.5 bg-white">
+                <option value="distance">Más cercano</option>
+                <option value="cost">Más barato</option>
+                <option value="cost-desc">Mayor calidad/precio</option>
+                <option value="rating">Mejor calificado</option>
+                <option value="transparency">Más transparente</option>
+              </select>
             </div>
 
             <div className="flex flex-col gap-3">
               {sorted.map((h) => (
-                <div key={h.id} className={`bg-white rounded-2xl border transition-all ${h.isPremium ? "border-hp-green/30 ring-1 ring-hp-green/10" : "border-gray-200"} ${expandedHospital === h.id ? "shadow-lg" : "hover:shadow-md"}`}>
+                <div key={h.id} id={`hospital-${h.id}`} className={`bg-white rounded-2xl border transition-all ${h.isPremium ? "border-hp-green/30 ring-1 ring-hp-green/10" : "border-gray-200"} ${expandedHospital === h.id ? "shadow-lg" : "hover:shadow-md"}`}>
                   <div className="p-5">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -470,10 +461,7 @@ export default function Home() {
                           {h.urgenciasOpen && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-hp-green-light text-hp-green">Urgencias abiertas</span>}
                         </div>
                         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-hp-gray mt-1">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                            {h.distanceKm !== null ? `${h.distanceKm.toFixed(1)} km` : "—"}
-                          </span>
+                          <span>{h.distanceKm !== null ? `📍 ${h.distanceKm.toFixed(1)} km` : "📍 —"}</span>
                           <span>⏱ {h.waitTime}</span>
                           <span>★ {h.rating}</span>
                           <span className="flex items-center gap-1.5">Transparencia <Dots level={h.transparency} /></span>
@@ -481,6 +469,11 @@ export default function Home() {
                         <div className="flex flex-wrap gap-1.5 mt-3">
                           {h.services.map((s) => <span key={s} className="text-[10px] px-2 py-0.5 rounded-md bg-hp-light border border-gray-100 text-hp-gray">{s}</span>)}
                         </div>
+                        {h.acceptsInsurance && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {h.insurers.map((ins) => <span key={ins} className="text-[9px] px-1.5 py-0.5 rounded bg-hp-blue-light text-hp-blue font-medium">{ins}</span>)}
+                          </div>
+                        )}
                       </div>
                       <div className="sm:text-right flex-shrink-0 sm:min-w-[160px]">
                         <p className="text-[10px] text-hp-gray uppercase tracking-wider mb-0.5">Anticipo estimado</p>
@@ -501,7 +494,6 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-
                   {expandedHospital === h.id && (
                     <div className="border-t border-gray-100 p-5 bg-hp-light/50 rounded-b-2xl animate-fade-in">
                       <div className="grid sm:grid-cols-2 gap-6">
@@ -526,8 +518,9 @@ export default function Home() {
                       </div>
                       {h.acceptsInsurance && (
                         <div className="mt-4 p-3 bg-hp-blue-light rounded-xl">
-                          <p className="text-xs font-semibold text-hp-blue mb-1">Seguro</p>
-                          <p className="text-[11px] text-hp-gray">Trabaja con principales aseguradoras. Puede haber deducible, coaseguro y conceptos no cubiertos.</p>
+                          <p className="text-xs font-semibold text-hp-blue mb-1">Seguros aceptados</p>
+                          <div className="flex flex-wrap gap-1.5 mt-1">{h.insurers.map((ins) => <span key={ins} className="text-[10px] px-2 py-0.5 rounded-full bg-white text-hp-blue font-medium">{ins}</span>)}</div>
+                          <p className="text-[11px] text-hp-gray mt-2">Puede haber deducible, coaseguro y conceptos no cubiertos.</p>
                         </div>
                       )}
                       <div className="mt-4 p-3 bg-hp-green-light rounded-xl">
@@ -543,69 +536,52 @@ export default function Home() {
                   )}
                 </div>
               ))}
+              {sorted.length === 0 && (
+                <div className="text-center py-12"><p className="text-hp-gray text-sm">No hay hospitales que coincidan con tus filtros.</p>
+                  <button onClick={() => { setInsuranceFilter(false); setConvenioFilter(false); }} className="mt-3 text-xs text-hp-blue hover:underline">Quitar filtros</button>
+                </div>
+              )}
             </div>
             <button onClick={() => setScreen(selectedZone ? "symptoms" : "home")} className="w-full mt-6 text-sm text-hp-gray hover:text-hp-dark transition-colors py-2">← Volver</button>
           </div>
         </section>
       )}
 
-      {/* ═══════ APPOINTMENT FORM ═══════ */}
+      {/* ═══════ APPOINTMENT ═══════ */}
       {screen === "appointment" && !apptCode && selectedHospital && (
         <section className="pt-20 pb-16 px-5 min-h-screen bg-hp-light">
           <div className="max-w-md mx-auto mt-4">
-            <div className="flex gap-1.5 mb-8">
-              <div className="h-1 flex-1 rounded-full bg-hp-green" />
-              <div className="h-1 flex-1 rounded-full bg-hp-green" />
-              <div className="h-1 flex-1 rounded-full bg-hp-green" />
-            </div>
-
+            <div className="flex gap-1.5 mb-8"><div className="h-1 flex-1 rounded-full bg-hp-green" /><div className="h-1 flex-1 rounded-full bg-hp-green" /><div className="h-1 flex-1 rounded-full bg-hp-green" /></div>
             <h2 className="font-[family-name:var(--font-display)] text-2xl text-hp-navy mb-1">Solicitar cita</h2>
             <p className="text-sm text-hp-gray mb-2">En <span className="font-semibold text-hp-dark">{selectedHospital.name}</span></p>
-            <p className="text-xs text-hp-gray mb-8">Sin registro. Tu confirmación llegará por correo.</p>
-
+            <p className="text-xs text-hp-gray mb-8">Sin registro. Confirmación por correo.</p>
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-hp-dark mb-1 block">Nombre completo</label>
-                <input value={apptName} onChange={(e) => setApptName(e.target.value)} placeholder="Ana García" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-hp-dark mb-1 block">Correo electrónico</label>
-                <input value={apptEmail} onChange={(e) => setApptEmail(e.target.value)} type="email" placeholder="ana@email.com" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-hp-dark mb-1 block">Teléfono</label>
-                <input value={apptPhone} onChange={(e) => setApptPhone(e.target.value)} type="tel" placeholder="33 1234 5678" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-hp-dark mb-1 block">Describe brevemente tu situación</label>
-                <textarea value={apptDesc} onChange={(e) => setApptDesc(e.target.value)} rows={3} placeholder="Dolor en abdomen desde hace 3 horas..." className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors resize-none" />
-              </div>
+              <div><label className="text-xs font-medium text-hp-dark mb-1 block">Nombre completo</label><input value={apptName} onChange={(e) => setApptName(e.target.value)} placeholder="Ana García" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors" /></div>
+              <div><label className="text-xs font-medium text-hp-dark mb-1 block">Correo electrónico</label><input value={apptEmail} onChange={(e) => setApptEmail(e.target.value)} type="email" placeholder="ana@email.com" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors" /></div>
+              <div><label className="text-xs font-medium text-hp-dark mb-1 block">Teléfono</label><input value={apptPhone} onChange={(e) => setApptPhone(e.target.value)} type="tel" placeholder="33 1234 5678" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors" /></div>
+              <div><label className="text-xs font-medium text-hp-dark mb-1 block">Describe tu situación</label><textarea value={apptDesc} onChange={(e) => setApptDesc(e.target.value)} rows={3} placeholder="Dolor en abdomen desde hace 3 horas..." className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green transition-colors resize-none" /></div>
             </div>
-
             {apptError && <p className="text-xs text-hp-coral mt-3">{apptError}</p>}
-
             <button onClick={handleAppointment} disabled={!apptName || !apptEmail || !apptPhone || apptSending}
               className="w-full mt-6 bg-hp-navy text-white py-4 rounded-2xl font-semibold text-base hover:bg-hp-navy/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               {apptSending ? "Enviando..." : "Enviar solicitud"}
             </button>
-            <button onClick={() => setScreen("results")} className="w-full mt-3 text-sm text-hp-gray hover:text-hp-dark transition-colors py-2">← Volver a hospitales</button>
+            <button onClick={() => setScreen("results")} className="w-full mt-3 text-sm text-hp-gray hover:text-hp-dark transition-colors py-2">← Volver</button>
           </div>
         </section>
       )}
 
-      {/* ═══════ APPOINTMENT CONFIRMATION ═══════ */}
+      {/* ═══════ CONFIRMATION ═══════ */}
       {apptCode && (
         <section className="pt-20 pb-16 px-5 min-h-screen bg-hp-light flex items-center justify-center">
           <div className="max-w-md mx-auto text-center animate-fade-up">
-            <div className="w-16 h-16 rounded-full bg-hp-green-light flex items-center justify-center mx-auto mb-6">
-              <span className="text-hp-green text-2xl">✓</span>
-            </div>
+            <div className="w-16 h-16 rounded-full bg-hp-green-light flex items-center justify-center mx-auto mb-6"><span className="text-hp-green text-2xl">✓</span></div>
             <h2 className="font-[family-name:var(--font-display)] text-2xl text-hp-navy mb-2">Solicitud enviada</h2>
-            <p className="text-sm text-hp-gray mb-6">Te enviamos un correo con los detalles. Tu código de verificación es:</p>
+            <p className="text-sm text-hp-gray mb-6">Te enviamos un correo. Tu código:</p>
             <div className="bg-white border-2 border-hp-green rounded-2xl px-8 py-5 inline-block mb-6">
               <p className="font-mono text-3xl font-bold text-hp-navy tracking-widest">{apptCode}</p>
             </div>
-            <p className="text-xs text-hp-gray mb-8">Guarda este código. Con él puedes verificar el estado de tu cita en cualquier momento.</p>
+            <p className="text-xs text-hp-gray mb-8">Guarda este código para verificar tu cita.</p>
             <div className="flex flex-col gap-3">
               <a href={`/verificar?code=${apptCode}`} className="bg-hp-navy text-white py-3 rounded-xl font-semibold text-sm hover:bg-hp-navy/90 transition-colors block">Verificar mi cita</a>
               <button onClick={() => { setScreen("home"); setApptCode(null); setApptName(""); setApptEmail(""); setApptPhone(""); setApptDesc(""); }}
