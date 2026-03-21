@@ -9,7 +9,7 @@ const TX = {
     badge: "Disponible en Jalisco — FIFA World Cup 2026",
     h1a: "Te ayudamos a decidir", h1b: "a dónde ir",
     sub: "Compara hospitales, revisa costos y da seguimiento a tu cuenta mientras te atienden. Sin registro, sin sorpresas.",
-    cta1: "Me siento mal ahora", cta2: "Comparar hospitales", cta3: "Cotizar cirugía",
+    cta1: "Me siento mal", cta2: "Comparar hospitales", cta3: "Cotizar cirugía",
     stat1: "434+", stat1l: "Hospitales en Jalisco", stat2: "<2s", stat2l: "Tiempo de respuesta", stat3: "$0", stat3l: "Costo para ti",
     howLabel: "CÓMO FUNCIONA", howTitle: "De tu síntoma a tu cita en 3 pasos",
     s1t: "Describe qué sientes", s1d: "Zona, intensidad, edad y si tienes seguro.", s2t: "Compara hospitales", s2d: "Solo los que pueden atenderte. Precios, seguros, mapa.", s3t: "Agenda sin registro", s3d: "Formulario simple. Confirmación con código por correo.",
@@ -45,7 +45,7 @@ const TX = {
     badge: "Available in Jalisco — FIFA World Cup 2026",
     h1a: "We help you decide", h1b: "where to go",
     sub: "Compare hospitals, check costs and track your bill while you get treated. No sign-up, no surprises.",
-    cta1: "I feel sick now", cta2: "Compare hospitals", cta3: "Quote surgery",
+    cta1: "I feel sick", cta2: "Compare hospitals", cta3: "Quote surgery",
     stat1: "434+", stat1l: "Hospitals in Jalisco", stat2: "<2s", stat2l: "Response time", stat3: "$0", stat3l: "Cost for you",
     howLabel: "HOW IT WORKS", howTitle: "From symptom to appointment in 3 steps",
     s1t: "Describe how you feel", s1d: "Body area, intensity, age and insurance.", s2t: "Compare hospitals", s2d: "Only those that can treat you. Prices, insurance, map.", s3t: "Book without sign-up", s3d: "Simple form. Email confirmation with code.",
@@ -168,8 +168,9 @@ export default function Home(){
     {/* Nav - LOGO ONLY, bigger */}
     <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-lg border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
-        <button onClick={()=>{setScreen("home");setExpanded(null);setACode(null);}}>
+        <button onClick={()=>{setScreen("home");setExpanded(null);setACode(null);}} className="flex items-center gap-3">
           <img src="/logo-healthping.jpeg" alt="HealthPing" className="h-12 w-auto"/>
+          <span className="font-[family-name:var(--font-display)] text-2xl text-hp-navy hidden sm:inline">Health<span className="text-hp-green">Ping</span></span>
         </button>
         <div className="flex items-center gap-3 text-sm">
           <a href="/verificar" className="hidden sm:inline text-hp-gray hover:text-hp-navy">{t.verifyCita}</a>
@@ -185,8 +186,8 @@ export default function Home(){
     {screen==="home"&&(<>
       {/* Hero - clean, no background image here */}
       <section className="pt-24 pb-12 px-5 bg-gradient-to-b from-hp-blue-pale to-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl">
+          <div className="max-w-6xl mx-auto text-center flex flex-col items-center">
+            <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-white border border-hp-green/20 text-hp-green text-sm font-semibold px-4 py-2 rounded-full mb-8">
               <span className="w-2.5 h-2.5 rounded-full bg-hp-green animate-pulse-ring"/>{t.badge}
             </div>
@@ -194,15 +195,14 @@ export default function Home(){
               {t.h1a}<br/><span className="italic text-hp-blue">{t.h1b}</span>
             </h1>
             <p className="text-lg sm:text-xl text-hp-gray max-w-lg mb-12 leading-relaxed">{t.sub}</p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={()=>setScreen("symptoms")} className="flex items-center justify-center gap-3 bg-hp-navy text-white px-8 py-4 rounded-2xl font-semibold text-base hover:bg-hp-navy/90 hover:shadow-xl transition-all">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">              <button onClick={()=>setScreen("symptoms")} className="flex items-center justify-center gap-3 bg-hp-navy text-white px-8 py-4 rounded-2xl font-semibold text-base hover:bg-hp-navy/90 hover:shadow-xl transition-all">
                 <span className="w-3 h-3 rounded-full bg-hp-coral animate-pulse-ring"/>{t.cta1}
               </button>
               <button onClick={()=>setScreen("results")} className="bg-white border-2 border-gray-200 text-hp-dark px-8 py-4 rounded-2xl font-semibold text-base hover:border-hp-blue hover:text-hp-blue transition-all">{t.cta2}</button>
               <button onClick={()=>setScreen("surgery")} className="bg-white border-2 border-gray-200 text-hp-dark px-8 py-4 rounded-2xl font-semibold text-base hover:border-hp-green hover:text-hp-green transition-all">🔬 {t.cta3}</button>
             </div>
           </div>
-          <div className="mt-16 grid grid-cols-3 gap-8 max-w-md">
+          <div className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto">
             {[{v:t.stat1,l:t.stat1l},{v:t.stat2,l:t.stat2l},{v:t.stat3,l:t.stat3l}].map(s=><div key={s.l}><p className="font-[family-name:var(--font-display)] text-3xl text-hp-navy">{s.v}</p><p className="text-sm text-hp-gray mt-1">{s.l}</p></div>)}
           </div>
         </div>
@@ -354,6 +354,33 @@ export default function Home(){
       <div className="bg-white border-2 border-hp-green rounded-2xl px-8 py-5 inline-block mb-6"><p className="font-mono text-3xl font-bold text-hp-navy tracking-widest">{aCode}</p></div>
       <p className="text-xs text-hp-gray mb-8">{t.confSave}</p>
       <a href={`/verificar?code=${aCode}`} className="bg-hp-navy text-white py-3 rounded-xl font-semibold text-sm block mb-3">{t.verify}</a>
+      {/* Modo acompañamiento */}
+      <div className="bg-white border border-hp-green/20 rounded-2xl p-6 mt-6 text-left">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="w-8 h-8 rounded-full bg-hp-green-light flex items-center justify-center text-hp-green text-sm">🏥</span>
+          <div>
+            <p className="text-sm font-semibold text-hp-dark">{lang==="es"?"Modo acompañamiento":"Companion mode"}</p>
+            <p className="text-[11px] text-hp-gray">{lang==="es"?"Te guiamos durante tu visita":"We guide you during your visit"}</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {[
+            {step:"1",label:lang==="es"?"Admisión":"Admission",desc:lang==="es"?"Pregunta por el anticipo y qué incluye":"Ask about the deposit and what it covers",status:"next"},
+            {step:"2",label:lang==="es"?"Valoración":"Assessment",desc:lang==="es"?"El médico te revisará y pedirá estudios":"The doctor will examine you and order tests",status:"pending"},
+            {step:"3",label:lang==="es"?"Estudios":"Tests",desc:lang==="es"?"Lab, imagen, rayos X según tu caso":"Lab, imaging, X-rays as needed",status:"pending"},
+            {step:"4",label:lang==="es"?"Diagnóstico":"Diagnosis",desc:lang==="es"?"Te dirán qué tienes y opciones de tratamiento":"They'll tell you what you have and treatment options",status:"pending"},
+            {step:"5",label:lang==="es"?"Alta":"Discharge",desc:lang==="es"?"Revisa tu cuenta final vs el estimado":"Review your final bill vs the estimate",status:"pending"},
+          ].map(s=>(
+            <div key={s.step} className={`flex items-start gap-3 p-3 rounded-xl ${s.status==="next"?"bg-hp-green-light border border-hp-green/20":"bg-hp-light"}`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${s.status==="next"?"bg-hp-green text-white":"bg-gray-200 text-hp-gray"}`}>{s.step}</span>
+              <div>
+                <p className={`text-sm font-semibold ${s.status==="next"?"text-hp-green-dark":"text-hp-gray"}`}>{s.label}</p>
+                <p className="text-[11px] text-hp-gray">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       <button onClick={()=>{setScreen("home");setACode(null);setAN("");setAE("");setAPh("");setAD("");}} className="text-sm text-hp-gray py-2">{t.backHome}</button>
     </div></section>)}
   </main>);

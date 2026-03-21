@@ -80,6 +80,33 @@ function VerifyContent() {
                 <p className="text-xs text-hp-green font-medium">¡Tu cita fue aceptada! Revisa tu correo para los detalles.</p>
               </div>
             )}
+            {/* Modo acompañamiento */}
+            <div className="bg-white border border-hp-green/20 rounded-2xl p-6 mt-6 text-left">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-8 h-8 rounded-full bg-hp-green-light flex items-center justify-center text-hp-green text-sm">🏥</span>
+                <div>
+                  <p className="text-sm font-semibold text-hp-dark">Modo acompañamiento</p>
+                  <p className="text-[11px] text-hp-gray">Te guiamos durante tu visita</p>
+                </div>
+              </div>
+              <div className="space-y-3">
+                {[
+                  {step:"1",label:"Admisión",desc:"Pregunta por el anticipo y qué incluye",status:"next"},
+                  {step:"2",label:"Valoración",desc:"El médico te revisará y pedirá estudios",status:"pending"},
+                  {step:"3",label:"Estudios",desc:"Lab, imagen, rayos X según tu caso",status:"pending"},
+                  {step:"4",label:"Diagnóstico",desc:"Te dirán qué tienes y opciones de tratamiento",status:"pending"},
+                  {step:"5",label:"Alta",desc:"Revisa tu cuenta final vs el estimado",status:"pending"},
+                ].map(s=>(
+                  <div key={s.step} className={`flex items-start gap-3 p-3 rounded-xl ${s.status==="next"?"bg-hp-green-light border border-hp-green/20":"bg-hp-light"}`}>
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${s.status==="next"?"bg-hp-green text-white":"bg-gray-200 text-hp-gray"}`}>{s.step}</span>
+                    <div>
+                      <p className={`text-sm font-semibold ${s.status==="next"?"text-hp-green-dark":"text-hp-gray"}`}>{s.label}</p>
+                      <p className="text-[11px] text-hp-gray">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
