@@ -1,7 +1,6 @@
 export type Lang = "es" | "en";
 
 export interface Translations {
-  badge: string;
   h1a: string; h1b: string;
   sub: string;
   cta1: string; cta2: string; cta3: string;
