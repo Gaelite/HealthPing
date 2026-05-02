@@ -3,7 +3,7 @@ import type { Translations } from "./types";
 export const es: Translations = {
   h1a: "Te ayudamos a decidir", h1b: "a dónde ir",
   sub: "Compara hospitales, revisa costos y da seguimiento a tu cuenta mientras te atienden. Sin registro, sin sorpresas.",
-  cta1: "Me siento mal", cta2: "Comparar hospitales", cta3: "Cotizar cirugía",
+  cta1: "Me siento mal", cta2: "Consultar hospitales", cta3: "Cotizar cirugía",
   stat1: "434+", stat1l: "Hospitales en Jalisco", stat2: "<2s", stat2l: "Tiempo de respuesta", stat3: "$0", stat3l: "Costo para ti",
   howLabel: "CÓMO FUNCIONA", howTitle: "De tu síntoma a tu cita en 3 pasos",
   s1t: "Describe qué sientes", s1d: "Zona, intensidad, edad y si tienes seguro.",
