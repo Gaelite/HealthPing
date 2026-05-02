@@ -78,7 +78,7 @@ export function SymptomForm({ zone, setZone, pain, setPain, extra, setExtra, sin
           <div>
             <p className="text-sm font-semibold text-hp-dark mb-3">{t.sex}</p>
             <div className="flex gap-1.5">
-              {([["male", t.male], ["female", t.female], ["na", t.noSay]] as [string, string][]).map(([v, l]) => (
+              {([["male", t.male], ["female", t.female]] as [string, string][]).map(([v, l]) => (
                 <button key={v} onClick={() => setSex(v)} className={`flex-1 text-[11px] px-1 py-3 rounded-xl border-2 font-medium ${sex === v ? "border-hp-green bg-hp-green-light text-hp-green-dark" : "border-gray-200 bg-white text-hp-gray"}`}>{l}</button>
               ))}
             </div>

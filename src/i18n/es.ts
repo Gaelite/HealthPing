@@ -1,7 +1,6 @@
 import type { Translations } from "./types";
 
 export const es: Translations = {
-  badge: "Disponible en Jalisco — FIFA World Cup 2026",
   h1a: "Te ayudamos a decidir", h1b: "a dónde ir",
   sub: "Compara hospitales, revisa costos y da seguimiento a tu cuenta mientras te atienden. Sin registro, sin sorpresas.",
   cta1: "Me siento mal", cta2: "Comparar hospitales", cta3: "Cotizar cirugía",

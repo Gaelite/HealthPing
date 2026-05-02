@@ -49,5 +49,3 @@ npm run dev
 4. Deploy automático
 
 ---
-
-*Preparado para FIFA World Cup 2026 — Sede Guadalajara*

@@ -14,9 +14,6 @@ export function HeroSection({ onFeelSick, onCompare, onSurgery }: HeroProps) {
     <section className="pt-24 pb-12 px-5 bg-gradient-to-b from-hp-blue-pale to-white">
       <div className="max-w-6xl mx-auto text-center flex flex-col items-center">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-white border border-hp-green/20 text-hp-green text-sm font-semibold px-4 py-2 rounded-full mb-8">
-            <span className="w-2.5 h-2.5 rounded-full bg-hp-green animate-pulse-ring" />{t.badge}
-          </div>
           <h1 className="font-[family-name:var(--font-display)] text-5xl sm:text-7xl leading-[1.05] text-hp-navy mb-6">
             {t.h1a}<br /><span className="italic text-hp-blue">{t.h1b}</span>
           </h1>
