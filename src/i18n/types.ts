@@ -1,0 +1,44 @@
+export type Lang = "es" | "en";
+
+export interface Translations {
+  badge: string;
+  h1a: string; h1b: string;
+  sub: string;
+  cta1: string; cta2: string; cta3: string;
+  stat1: string; stat1l: string; stat2: string; stat2l: string; stat3: string; stat3l: string;
+  howLabel: string; howTitle: string;
+  s1t: string; s1d: string; s2t: string; s2d: string; s3t: string; s3d: string;
+  hospCta: string; hospCtaSub: string; hospCtaBtn: string;
+  sympTitle: string; sympSub: string; whereHurt: string;
+  howBad: string; whatElse: string; sinceWhen: string;
+  age: string; sex: string; male: string; female: string; noSay: string;
+  hasIns: string;
+  next: string; back: string;
+  insTitle: string; insSub: string; otherIns: string;
+  seeHosp: string;
+  resultsTitle: string; onlyConvenio: string;
+  closest: string; cheapest: string; bestRated: string; mostTransp: string;
+  seeBreakdown: string; close: string; requestAppt: string;
+  included: string; mayIncrease: string;
+  insAccepted: string; beforeEnter: string;
+  q1: string; q2: string; q3: string; q4: string;
+  apptTitle: string; apptAt: string; apptNoSchedule: string;
+  name: string; email: string; phone: string;
+  describe: string; send: string; sending: string;
+  confTitle: string; confSub: string; confSave: string;
+  verify: string; backHome: string;
+  portalHosp: string; verifyCita: string;
+  openNow: string; estimated: string;
+  noResults: string; clearFilters: string;
+  comingSoon: string; comingSoonSub: string;
+  mild: string; moderate: string; intense: string;
+  deposit: string; initialCost: string;
+  options: string; accepts: string; convenio: string; urgencias: string;
+  yes: string; no: string; pharmacy: string;
+  companionMode: string; companionSub: string;
+  stepAdmission: string; stepAdmissionDesc: string;
+  stepAssessment: string; stepAssessmentDesc: string;
+  stepTests: string; stepTestsDesc: string;
+  stepDiagnosis: string; stepDiagnosisDesc: string;
+  stepDischarge: string; stepDischargeDesc: string;
+}

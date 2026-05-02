@@ -3,94 +3,95 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
-type HospitalPin = {
+export interface MapHospitalPin {
   id: number;
   name: string;
   lat: number;
   lng: number;
   isPremium: boolean;
   level: string;
-  anticipoRange: string;
-};
+  depositRange: string;
+}
 
-type Props = {
-  hospitals: HospitalPin[];
+interface HospitalMapProps {
+  hospitals: MapHospitalPin[];
   userLat: number | null;
   userLng: number | null;
   onSelectHospital?: (id: number) => void;
-};
+}
 
-function MapInner({ hospitals, userLat, userLng, onSelectHospital }: Props) {
-  const [L, setL] = useState<typeof import("leaflet") | null>(null);
-  const [ready, setReady] = useState(false);
+function MapInner({ hospitals, userLat, userLng, onSelectHospital }: HospitalMapProps) {
+  const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
 
   useEffect(() => {
-    import("leaflet").then((mod) => { setL(mod.default || mod); setReady(true); });
+    import("leaflet").then((mod) => setLeaflet(mod.default || mod));
   }, []);
 
   useEffect(() => {
-    if (!ready || !L) return;
+    if (!leaflet) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
-    L.Icon.Default.mergeOptions({
+    delete (leaflet.Icon.Default.prototype as any)._getIconUrl;
+    leaflet.Icon.Default.mergeOptions({
       iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
       iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
       shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
     });
 
-    const centerLat = userLat || 20.6767;
-    const centerLng = userLng || -103.3812;
     const container = document.getElementById("hp-map");
     if (!container) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((container as any)._leaflet_id) { container.innerHTML = ""; delete (container as any)._leaflet_id; }
 
-    const map = L.map("hp-map").setView([centerLat, centerLng], 13);
+    const centerLat = userLat || 20.6767;
+    const centerLng = userLng || -103.3812;
+    const map = leaflet.map("hp-map").setView([centerLat, centerLng], 13);
 
-    // CartoDB Positron: clean, minimal, no highway labels like MEX 15D
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    leaflet.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://osm.org/copyright">OSM</a>',
-      maxZoom: 19,
-      subdomains: "abcd",
+      maxZoom: 19, subdomains: "abcd",
     }).addTo(map);
 
+    // User marker
     if (userLat && userLng) {
-      const userIcon = L.divIcon({
+      const userIcon = leaflet.divIcon({
         html: '<div style="width:18px;height:18px;background:#1A73B5;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>',
         className: "", iconSize: [18, 18], iconAnchor: [9, 9],
       });
-      L.marker([userLat, userLng], { icon: userIcon }).addTo(map).bindPopup("<strong>Tu ubicación</strong>");
+      leaflet.marker([userLat, userLng], { icon: userIcon }).addTo(map).bindPopup("<strong>📍</strong>");
     }
 
+    // Hospital markers
+    const levelLabels: Record<string, string> = { FIRST: "1°", SECOND: "2°", THIRD: "3°" };
     hospitals.forEach((h) => {
       const color = h.isPremium ? "#16A085" : "#94A3B8";
       const size = h.isPremium ? 14 : 11;
-      const icon = L.divIcon({
+      const icon = leaflet.divIcon({
         html: `<div style="width:${size}px;height:${size}px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,0.25);"></div>`,
         className: "", iconSize: [size, size], iconAnchor: [size / 2, size / 2],
       });
-      const levelLabel: Record<string, string> = { FIRST: "1er nivel", SECOND: "2do nivel", THIRD: "3er nivel" };
-      const marker = L.marker([h.lat, h.lng], { icon }).addTo(map);
-      marker.bindPopup(`
+      leaflet.marker([h.lat, h.lng], { icon }).addTo(map).bindPopup(`
         <div style="font-family:system-ui;min-width:160px;">
           <strong style="font-size:13px;">${h.name}</strong><br/>
-          <span style="font-size:11px;color:#64748B;">${levelLabel[h.level] || ""}</span>
-          ${h.isPremium ? '<span style="font-size:10px;background:#16A085;color:white;padding:1px 6px;border-radius:8px;margin-left:4px;">Convenio</span>' : ""}
-          <br/><span style="font-size:12px;font-weight:600;color:#0A2540;">${h.anticipoRange}</span>
-          <br/><button onclick="window.__hpSelect&&window.__hpSelect(${h.id})" style="margin-top:6px;padding:4px 12px;background:#0A2540;color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;">Ver detalles</button>
+          <span style="font-size:11px;color:#64748B;">${levelLabels[h.level] || ""}</span>
+          ${h.isPremium ? '<span style="font-size:10px;background:#16A085;color:white;padding:1px 6px;border-radius:8px;margin-left:4px;">✓</span>' : ""}
+          <br/><span style="font-size:12px;font-weight:600;color:#0A2540;">${h.depositRange}</span>
+          <br/><button onclick="window.__hpMapSelect&&window.__hpMapSelect(${h.id})" style="margin-top:6px;padding:4px 12px;background:#0A2540;color:white;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;">→</button>
         </div>
       `);
     });
 
+    // Fit bounds
     if (hospitals.length > 0) {
-      const pts: [number, number][] = hospitals.map((h) => [h.lat, h.lng]);
-      if (userLat && userLng) pts.push([userLat, userLng]);
-      map.fitBounds(pts, { padding: [40, 40], maxZoom: 14 });
+      const points: [number, number][] = hospitals.map((h) => [h.lat, h.lng]);
+      if (userLat && userLng) points.push([userLat, userLng]);
+      map.fitBounds(points, { padding: [40, 40], maxZoom: 14 });
     }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__hpSelect = (id: number) => onSelectHospital?.(id);
-    return () => { map.remove(); delete (window as any).__hpSelect; }; // eslint-disable-line @typescript-eslint/no-explicit-any
-  }, [ready, L, hospitals, userLat, userLng, onSelectHospital]);
+    (window as any).__hpMapSelect = (id: number) => onSelectHospital?.(id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return () => { map.remove(); delete (window as any).__hpMapSelect; };
+  }, [leaflet, hospitals, userLat, userLng, onSelectHospital]);
 
   return (
     <>
