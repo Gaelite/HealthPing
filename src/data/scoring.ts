@@ -237,3 +237,56 @@ export function getSuggestedRoute(categoryId: string, level: UrgencyLevel): Sugg
   if (!categoryRoutes) return defaultRoute;
   return categoryRoutes[level] || defaultRoute;
 }
+
+/**
+ * Returns relevant desglose items for a hospital based on the user's
+ * category and urgency level. Filters out services that don't apply
+ * to the user's situation.
+ *
+ * HP-03: Symptom-indexed relevance for hospital breakdown
+ */
+export function getRelevantDesglose(
+  hospitalDesglose: { n: string; p: string; i: boolean }[],
+  categoryId: string,
+  level: UrgencyLevel
+): { n: string; p: string; i: boolean; relevant: boolean }[] {
+  // Services that are only relevant for higher urgency
+  const highUrgencyTerms = [
+    "Cirugía", "Surgery", "Cuarto/noche", "Room/night",
+    "Tomografía", "CT scan", "CT Scan",
+    "Anestesiólogo", "Anesthesiologist",
+    "Hemodinamia", "Catheterization",
+    "UCI", "ICU", "Monitorización", "Monitoring",
+  ];
+
+  // Services only relevant for specific categories
+  const categoryRelevance: Record<string, string[]> = {
+    abdomen: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "USG", "Ultrasound", "Solución IV", "IV fluids", "Antiemético", "Antiemetic", "Analgésico", "Painkiller"],
+    chest: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "ECG", "Troponinas", "Troponins", "RX", "X-ray", "X-Ray", "Monitorización", "Monitoring"],
+    neuro: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "Tomografía", "CT", "ECG"],
+    urinary: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "USG", "Ultrasound", "EGO", "Urinalysis"],
+    gyne: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "USG", "Ultrasound", "Prueba embarazo", "Pregnancy"],
+    skin: ["Consulta", "Consultation", "Curación", "Wound", "Sutura", "Suture", "Medicamentos", "Medications"],
+    trauma: ["Admisión", "Admission", "RX", "X-ray", "X-Ray", "Honorarios", "Doctor", "Medicamentos", "Medications", "Inmovilización"],
+    fever: ["Consulta", "Consultation", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "RX", "X-ray"],
+  };
+
+  const relevantTerms = categoryRelevance[categoryId] || [];
+
+  return hospitalDesglose.map((item) => {
+    // Always-relevant items (admission, basic lab, doctor fees, meds)
+    const isBasic = ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "Consulta", "Consultation"]
+      .some((term) => item.n.includes(term));
+
+    // High urgency items only relevant if urgent/emergency
+    const isHighUrgency = highUrgencyTerms.some((term) => item.n.includes(term));
+    if (isHighUrgency && (level === "basic" || level === "same_day")) {
+      return { ...item, relevant: false };
+    }
+
+    // Category-specific relevance
+    const matchesCategory = relevantTerms.some((term) => item.n.includes(term));
+
+    return { ...item, relevant: isBasic || matchesCategory };
+  });
+}
