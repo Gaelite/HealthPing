@@ -19,8 +19,7 @@ export function Navbar({ onLogoClick }: NavbarProps) {
           </span>
         </button>
         <div className="flex items-center gap-3 text-sm">
-          <a href="/verify" className="hidden sm:inline text-hp-gray hover:text-hp-navy">{t.verifyCita}</a>
-          <a href="/dashboard" className="hidden sm:inline bg-hp-green text-white px-4 py-2 rounded-lg font-medium hover:bg-hp-green-dark">{t.portalHosp}</a>
+          <a href="/verify" className="hidden sm:inline bg-hp-green text-white px-4 py-2 rounded-lg font-medium hover:bg-hp-green-dark">{t.verifyCita}</a>
           <button onClick={toggle} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border border-gray-200 bg-white hover:border-hp-blue">
             <span className="text-base">{lang === "es" ? "🇲🇽" : "🇺🇸"}</span>
             <span className="font-medium">{lang === "es" ? "ES" : "EN"}</span>
