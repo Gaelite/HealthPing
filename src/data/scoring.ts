@@ -261,22 +261,23 @@ export function getRelevantDesglose(
 
   // Services only relevant for specific categories
   const categoryRelevance: Record<string, string[]> = {
-    abdomen: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "USG", "Ultrasound", "Solución IV", "IV fluids", "Antiemético", "Antiemetic", "Analgésico", "Painkiller"],
-    chest: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "ECG", "Troponinas", "Troponins", "RX", "X-ray", "X-Ray", "Monitorización", "Monitoring"],
-    neuro: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "Tomografía", "CT", "ECG"],
-    urinary: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "USG", "Ultrasound", "EGO", "Urinalysis"],
-    gyne: ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "USG", "Ultrasound", "Prueba embarazo", "Pregnancy"],
-    skin: ["Consulta", "Consultation", "Curación", "Wound", "Sutura", "Suture", "Medicamentos", "Medications"],
-    trauma: ["Admisión", "Admission", "RX", "X-ray", "X-Ray", "Honorarios", "Doctor", "Medicamentos", "Medications", "Inmovilización"],
-    fever: ["Consulta", "Consultation", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "RX", "X-ray"],
+    abdomen: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Examen general de orina", "Urinalysis", "Medicamento", "medication", "USG", "Ultrasound", "Solución IV", "IV fluids", "Antiemético", "Antiemetic"],
+    chest: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Medicamento", "medication", "Electrocardiograma", "Electrocardiogram", "Troponinas", "Troponins", "Radiografía tórax", "Chest X-ray"],
+    neuro: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Medicamento", "medication", "Tomografía", "CT scan", "Electrocardiograma", "Electrocardiogram"],
+    urinary: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Examen general de orina", "Urinalysis", "Medicamento", "medication", "USG", "Ultrasound"],
+    gyne: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Examen general de orina", "Urinalysis", "Medicamento", "medication", "USG", "Ultrasound", "Prueba embarazo", "Pregnancy"],
+    skin: ["Consulta", "Consultation", "Medicamento", "medication", "Curación", "Wound care", "Sutura", "Suture"],
+    trauma: ["Consulta", "Consultation", "Radiografía", "X-ray", "X-Ray", "Medicamento", "medication", "Valoración especialista", "Specialist"],
+    fever: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Examen general de orina", "Urinalysis", "Medicamento", "medication", "Radiografía", "X-ray"],
+    unknown: ["Consulta", "Consultation", "Biometría", "Complete blood", "Química", "Blood chemistry", "Medicamento", "medication"],
   };
 
   const relevantTerms = categoryRelevance[categoryId] || [];
 
   return hospitalDesglose.map((item) => {
     // Always-relevant items (admission, basic lab, doctor fees, meds)
-    const isBasic = ["Admisión", "Admission", "Lab", "Honorarios", "Doctor", "Medicamentos", "Medications", "Consulta", "Consultation"]
-      .some((term) => item.n.includes(term));
+    const isBasic = ["Consulta", "Consultation", "Biometría", "Complete blood", "Medicamento", "medication"]
+      .some((term) => item.n.toLowerCase().includes(term.toLowerCase()));
 
     // High urgency items only relevant if urgent/emergency
     const isHighUrgency = highUrgencyTerms.some((term) => item.n.includes(term));

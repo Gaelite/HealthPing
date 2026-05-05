@@ -77,7 +77,12 @@ export function SymptomFlow({
         </p>
 
         {/* Step 1: Category */}
-        <CategorySelect selected={category} onSelect={(id) => { setCategory(id); setSymptoms([]); setPainScore(0); }} />
+        <CategorySelect selected={category} onSelect={(id) => { 
+          setCategory(id); 
+          setSymptoms([]); 
+          setPainScore(0);
+          if (id === "gyne") setSex("female");
+        }} />
 
         {/* Step 2: Symptoms (appears after category) */}
         {category && (
@@ -101,6 +106,7 @@ export function SymptomFlow({
             sex={sex} setSex={setSex}
             hasInsurance={hasInsurance} setHasInsurance={setHasInsurance}
             riskFactors={riskFactorIds} onToggleRisk={toggleRisk}
+            categoryId={category}
           />
         )}
 
