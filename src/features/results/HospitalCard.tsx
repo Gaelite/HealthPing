@@ -3,6 +3,7 @@
 import { useLang } from "@/i18n";
 import { LevelBadge, TransparencyDots } from "@/components/ui/Badges";
 import type { EnrichedHospital } from "@/data/types";
+import { getRelevantDesglose, type UrgencyLevel } from "@/data/scoring";
 
 interface HospitalCardProps {
   hospital: EnrichedHospital;
@@ -10,10 +11,11 @@ interface HospitalCardProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onRequestAppt: () => void;
+  categoryId?: string | null;      // add
+  urgencyLevel?: UrgencyLevel;     // add
 }
 
-export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand, onRequestAppt }: HospitalCardProps) {
-  const { lang, t } = useLang();
+export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand, onRequestAppt, categoryId, urgencyLevel }: HospitalCardProps) {  const { lang, t } = useLang();
 
   return (
     <div id={`h-${h.id}`} className={`bg-white rounded-2xl border ${h.prem ? "border-hp-green/30 ring-1 ring-hp-green/10" : h.type === "pharmacy" ? "border-hp-amber/30" : "border-gray-200"} ${isExpanded ? "shadow-lg" : "hover:shadow-md"} transition-all`}>
@@ -53,12 +55,60 @@ export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand,
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-semibold text-hp-dark mb-3">{t.included}</p>
-              {h.dsg[lang].filter((d) => d.i).map((d) => (
-                <div key={d.n} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
-                  <span className="text-xs text-hp-gray flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-hp-green" />{d.n}</span>
-                  <span className="text-xs font-semibold text-hp-dark">{d.p}</span>
-                </div>
-              ))}
+              {(() => {
+                const items = categoryId && urgencyLevel
+                  ? getRelevantDesglose(h.dsg[lang], categoryId, urgencyLevel)
+                  : h.dsg[lang].map((d) => ({ ...d, relevant: true }));
+
+                const relevant = items.filter((d) => d.relevant);
+                const notRelevant = items.filter((d) => !d.relevant);
+                const included = relevant.filter((d) => d.i);
+                const extras = relevant.filter((d) => !d.i);
+
+                return (
+                  <>
+                    <div className="grid sm:grid-cols-2 gap-6">
+                      {included.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-hp-dark mb-3">{t.included}</p>
+                          {included.map((d) => (
+                            <div key={d.n} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
+                              <span className="text-xs text-hp-gray flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-hp-green" />{d.n}</span>
+                              <span className="text-xs font-semibold text-hp-dark">{d.p}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {extras.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-hp-dark mb-3">{t.mayIncrease}</p>
+                          {extras.map((d) => (
+                            <div key={d.n} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
+                              <span className="text-xs text-hp-gray flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-hp-amber" />{d.n}</span>
+                              <span className="text-xs font-semibold text-hp-dark">{d.p}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {notRelevant.length > 0 && (
+                      <details className="mt-3">
+                        <summary className="text-[11px] text-hp-gray cursor-pointer hover:text-hp-blue">
+                          {lang === "es" ? `+ ${notRelevant.length} servicios no relacionados con tu caso` : `+ ${notRelevant.length} services not related to your case`}
+                        </summary>
+                        <div className="mt-2 space-y-1">
+                          {notRelevant.map((d) => (
+                            <div key={d.n} className="flex justify-between py-1 opacity-50">
+                              <span className="text-[11px] text-hp-gray">{d.n}</span>
+                              <span className="text-[11px] text-hp-gray">{d.p}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             <div>
               <p className="text-xs font-semibold text-hp-dark mb-3">{t.mayIncrease}</p>

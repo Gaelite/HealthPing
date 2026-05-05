@@ -58,19 +58,23 @@ export function PatientInfo({ age, setAge, sex, setSex, hasInsurance, setHasInsu
           {lang === "es" ? "Opcional. Ayuda a priorizar tu orientación." : "Optional. Helps prioritize your guidance."}
         </p>
         <div className="flex flex-wrap gap-2">
-          {RISK_FACTORS.map((rf) => (
-            <button
-              key={rf.id}
-              onClick={() => onToggleRisk(rf.id)}
-              className={`text-xs px-3 py-2 rounded-full border font-medium ${
-                riskFactors.includes(rf.id)
-                  ? "border-hp-amber bg-hp-amber-light text-hp-amber"
-                  : "border-gray-200 bg-white text-hp-gray"
-              }`}
-            >
-              {rf.label[lang]}
-            </button>
-          ))}
+          {RISK_FACTORS.map((rf) => {
+            if (sex === "male" && rf.id === "pregnant") return null;
+
+            return (
+              <button
+                key={rf.id}
+                onClick={() => onToggleRisk(rf.id)}
+                className={`text-xs px-3 py-2 rounded-full border font-medium ${
+                  riskFactors.includes(rf.id)
+                    ? "border-hp-amber bg-hp-amber-light text-hp-amber"
+                    : "border-gray-200 bg-white text-hp-gray"
+                }`}
+              >
+                {rf.label[lang]}
+              </button>
+            );
+          })}
         </div>
       </div>
 

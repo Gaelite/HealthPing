@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useLang } from "@/i18n";
 import { ProgressBar } from "@/components/ui/Badges";
 import { CategorySelect } from "./CategorySelect";
@@ -8,36 +7,33 @@ import { SymptomSelect } from "./SymptomSelect";
 import { PainScale } from "./PainScale";
 import { RedFlagCheck } from "./RedFlagCheck";
 import { PatientInfo } from "./PatientInfo";
-import { calculateUrgency, type ScoringInput } from "@/data/scoring";
 
 interface SymptomFlowProps {
-  onComplete: (result: {
-    categoryId: string;
-    symptoms: string[];
-    painScore: number;
-    redFlagIds: string[];
-    riskFactorIds: string[];
-    age: string;
-    sex: string | null;
-    hasInsurance: boolean | null;
-    urgency: ReturnType<typeof calculateUrgency>;
-  }) => void;
+  category: string | null; setCategory: (v: string | null) => void;
+  symptoms: string[]; setSymptoms: (v: string[]) => void;
+  painScore: number; setPainScore: (v: number) => void;
+  redFlagIds: string[]; setRedFlagIds: (v: string[]) => void;
+  riskFactorIds: string[]; setRiskFactorIds: (v: string[]) => void;
+  age: string; setAge: (v: string) => void;
+  sex: string | null; setSex: (v: string) => void;
+  hasInsurance: boolean | null; setHasInsurance: (v: boolean) => void;
+  onNext: () => void;
   onBack: () => void;
 }
 
-export function SymptomFlow({ onComplete, onBack }: SymptomFlowProps) {
+export function SymptomFlow({
+  category, setCategory,
+  symptoms, setSymptoms,
+  painScore, setPainScore,
+  redFlagIds, setRedFlagIds,
+  riskFactorIds, setRiskFactorIds,
+  age, setAge,
+  sex, setSex,
+  hasInsurance, setHasInsurance,
+  onNext, onBack,
+}: SymptomFlowProps) {
   const { lang, t } = useLang();
 
-  const [category, setCategory] = useState<string | null>(null);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
-  const [pain, setPain] = useState(0);
-  const [redFlags, setRedFlags] = useState<string[]>([]);
-  const [riskFactors, setRiskFactors] = useState<string[]>([]);
-  const [age, setAge] = useState("");
-  const [sex, setSex] = useState<string | null>(null);
-  const [hasInsurance, setHasInsurance] = useState<boolean | null>(null);
-
-  // Pain question is conditional: only show if a pain-related symptom is selected
   const painTerms = [
     "Dolor abdominal", "Abdominal pain",
     "Dolor/presión en pecho", "Chest pain/pressure",
@@ -50,48 +46,21 @@ export function SymptomFlow({ onComplete, onBack }: SymptomFlowProps) {
   ];
   const showPain = symptoms.some((s) => painTerms.includes(s));
 
-  const toggleSymptom = (s: string) => setSymptoms((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+  const toggleSymptom = (s: string) => setSymptoms(
+    symptoms.includes(s) ? symptoms.filter((x) => x !== s) : [...symptoms, s]
+  );
 
   const toggleRedFlag = (id: string) => {
-    if (id === "none") {
-      setRedFlags(["none"]);
-      return;
-    }
-    setRedFlags((prev) => {
-      const without = prev.filter((x) => x !== "none");
-      return without.includes(id) ? without.filter((x) => x !== id) : [...without, id];
-    });
+    if (id === "none") { setRedFlagIds(["none"]); return; }
+    const without = redFlagIds.filter((x) => x !== "none");
+    setRedFlagIds(without.includes(id) ? without.filter((x) => x !== id) : [...without, id]);
   };
 
-  const toggleRisk = (id: string) => setRiskFactors((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const toggleRisk = (id: string) => setRiskFactorIds(
+    riskFactorIds.includes(id) ? riskFactorIds.filter((x) => x !== id) : [...riskFactorIds, id]
+  );
 
   const canSubmit = category && symptoms.length > 0;
-
-  const handleSubmit = () => {
-    if (!category) return;
-
-    const input: ScoringInput = {
-      symptoms,
-      painScore: showPain ? pain : 0,
-      redFlagIds: redFlags,
-      riskFactorIds: riskFactors,
-      categoryId: category,
-    };
-
-    const urgency = calculateUrgency(input);
-
-    onComplete({
-      categoryId: category,
-      symptoms,
-      painScore: showPain ? pain : 0,
-      redFlagIds: redFlags,
-      riskFactorIds: riskFactors,
-      age,
-      sex,
-      hasInsurance,
-      urgency,
-    });
-  };
 
   return (
     <section className="pt-20 pb-16 px-5 min-h-screen bg-hp-light">
@@ -108,7 +77,7 @@ export function SymptomFlow({ onComplete, onBack }: SymptomFlowProps) {
         </p>
 
         {/* Step 1: Category */}
-        <CategorySelect selected={category} onSelect={(id) => { setCategory(id); setSymptoms([]); setPain(0); }} />
+        <CategorySelect selected={category} onSelect={(id) => { setCategory(id); setSymptoms([]); setPainScore(0); }} />
 
         {/* Step 2: Symptoms (appears after category) */}
         {category && (
@@ -117,12 +86,12 @@ export function SymptomFlow({ onComplete, onBack }: SymptomFlowProps) {
 
         {/* Step 3: Pain scale (conditional) */}
         {category && symptoms.length > 0 && showPain && (
-          <PainScale value={pain} onChange={setPain} />
+          <PainScale value={painScore} onChange={setPainScore} />
         )}
 
         {/* Step 4: Red flags (appears after symptoms) */}
         {category && symptoms.length > 0 && (
-          <RedFlagCheck selected={redFlags} onToggle={toggleRedFlag} />
+          <RedFlagCheck selected={redFlagIds} onToggle={toggleRedFlag} />
         )}
 
         {/* Step 5: Patient info */}
@@ -131,13 +100,13 @@ export function SymptomFlow({ onComplete, onBack }: SymptomFlowProps) {
             age={age} setAge={setAge}
             sex={sex} setSex={setSex}
             hasInsurance={hasInsurance} setHasInsurance={setHasInsurance}
-            riskFactors={riskFactors} onToggleRisk={toggleRisk}
+            riskFactors={riskFactorIds} onToggleRisk={toggleRisk}
           />
         )}
 
         {/* Submit */}
         <button
-          onClick={handleSubmit}
+          onClick={onNext}
           disabled={!canSubmit}
           className="w-full mt-8 bg-hp-navy text-white py-4 rounded-2xl font-semibold text-lg disabled:opacity-40"
         >

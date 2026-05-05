@@ -10,11 +10,12 @@ import { sendConfirmationEmail } from "@/lib/emailjs";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection, CarouselBanner, HowItWorks, HospitalCTA } from "@/features/home";
-import { SymptomForm } from "@/features/symptoms/SymptomForm";
+import { SymptomFlow } from "@/features/symptoms/SymptomFlow";
 import { InsuranceSelector } from "@/features/insurance/InsuranceSelector";
 import { ResultsScreen } from "@/features/results/ResultsScreen";
 import { AppointmentForm, ConfirmationScreen } from "@/features/appointment/AppointmentFlow";
 import { SurgeryComingSoon } from "@/features/surgery/SurgeryComingSoon";
+import { calculateUrgency, UrgencyResult, type ScoringInput } from "@/data/scoring";
 
 type Screen = "home" | "symptoms" | "insurance" | "results" | "appointment" | "surgery";
 
@@ -43,6 +44,7 @@ function AppContent() {
   const [convenio, setConvenio] = useState(false);
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
+  const [urgencyResult, setUrgencyResult] = useState<UrgencyResult | null>(null);
 
   // ── Appointment state ──
   const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
@@ -57,16 +59,28 @@ function AppContent() {
   // ── Navigation handlers ──
   const goHome = () => { setScreen("home"); setExpanded(null); setApptCode(null); };
 
-  const geoAndGoResults = useCallback(async () => {
-    const location = await requestGeolocation();
-    if (location) { setUserLat(location.lat); setUserLng(location.lng); }
-    setScreen("results");
-  }, []);
+  // ── Symptom engine state ──
+  const [category, setCategory] = useState<string | null>(null);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [painScore, setPainScore] = useState(0);
+  const [redFlagIds, setRedFlagIds] = useState<string[]>([]);
+  const [riskFactorIds, setRiskFactorIds] = useState<string[]>([]);
 
   const afterSymptoms = () => {
+    const input: ScoringInput = { symptoms, painScore, redFlagIds, riskFactorIds, categoryId: category || "" };
+    const result = calculateUrgency(input);
+    setUrgencyResult(result);
     if (hasInsurance) setScreen("insurance");
     else geoAndGoResults();
   };
+
+  const geoAndGoResults = useCallback(() => {
+    setScreen("results");
+    // Request location in background, doesn't block navigation
+    requestGeolocation().then((loc) => {
+      if (loc) { setUserLat(loc.lat); setUserLng(loc.lng); }
+    });
+  }, []);
 
   const startAppointment = (hospitalId: number) => {
     setSelectedHospitalId(hospitalId);
@@ -165,12 +179,17 @@ function AppContent() {
       {screen === "surgery" && <SurgeryComingSoon onBack={goHome} />}
 
       {screen === "symptoms" && (
-        <SymptomForm
-          zone={zone} setZone={setZone} pain={pain} setPain={setPain}
-          extra={extra} setExtra={setExtra} since={since} setSince={setSince}
-          age={age} setAge={setAge} sex={sex} setSex={setSex}
+        <SymptomFlow
+          category={category} setCategory={(id) => { setCategory(id); setSymptoms([]); setPainScore(0); }}
+          symptoms={symptoms} setSymptoms={setSymptoms}
+          painScore={painScore} setPainScore={setPainScore}
+          redFlagIds={redFlagIds} setRedFlagIds={setRedFlagIds}
+          riskFactorIds={riskFactorIds} setRiskFactorIds={setRiskFactorIds}
+          age={age} setAge={setAge}
+          sex={sex} setSex={setSex}
           hasInsurance={hasInsurance} setHasInsurance={setHasInsurance}
-          onNext={afterSymptoms} onBack={goHome}
+          onNext={afterSymptoms}
+          onBack={goHome}
         />
       )}
 
@@ -192,7 +211,13 @@ function AppContent() {
           userLat={userLat} userLng={userLng}
           onSelectHospital={handleMapSelect}
           onRequestAppt={startAppointment}
-          onBack={() => setScreen(zone ? "symptoms" : "home")}
+          categoryId={category}
+          urgencyLevel={urgencyResult?.level}
+          onBack={() => {
+            if (insurer) setScreen("insurance");
+            else if (category) setScreen("symptoms");
+            else setScreen("home");
+          }}
         />
       )}
 
