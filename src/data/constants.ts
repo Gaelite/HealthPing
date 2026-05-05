@@ -33,6 +33,6 @@ export const CAROUSEL_SLIDES: CarouselSlide[] = [
   { tip: { es: "Hidrátate bien, habrá mucho sol", en: "Stay hydrated, it'll be sunny" }, emoji: "", img: "https://images.unsplash.com/photo-1551076805-e1869033e561?w=800&q=80" },
   { tip: { es: "Cuidado con el dengue: usa repelente", en: "Watch out for dengue: use repellent" }, emoji: "", img: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80" },
   { tip: { es: "Protégete del sol: usa bloqueador", en: "Protect yourself from the sun" }, emoji: "", img: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=800&q=80" },
-  { tip: { es: "Lávate las manos frecuentemente", en: "Wash your hands frequently" }, emoji: "", img: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800&q=80" },
+  { tip: { es: "Lávate las manos frecuentemente", en: "Wash your hands frequently" }, emoji: "", img: "/image1.jpg" },
   { tip: { es: "Si bebes alcohol, hazlo con moderación", en: "Drink alcohol in moderation" }, emoji: "", img: "https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=800&q=80" },
 ];
