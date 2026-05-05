@@ -7,6 +7,7 @@ import HospitalMap from "@/components/map/HospitalMap";
 import { HospitalCard } from "./HospitalCard";
 import { FilterBar } from "./FilterBar";        
 import { applyTagFilters } from "./filterTags";
+import type { UrgencyLevel } from "@/data/scoring";
 
 interface ResultsScreenProps {
   hospitals: EnrichedHospital[];
@@ -18,9 +19,11 @@ interface ResultsScreenProps {
   onSelectHospital: (id: number) => void;
   onRequestAppt: (id: number) => void;
   onBack: () => void;
+  categoryId?: string | null;
+  urgencyLevel?: UrgencyLevel;
 }
 
-export function ResultsScreen({ hospitals, insurer, setInsurer, convenio, setConvenio, sortBy, setSortBy, expanded, setExpanded, userLat, userLng, onSelectHospital, onRequestAppt, onBack }: ResultsScreenProps) {
+export function ResultsScreen({ hospitals, insurer, setInsurer, convenio, setConvenio, sortBy, setSortBy, expanded, setExpanded, userLat, userLng, onSelectHospital, onRequestAppt, onBack, categoryId, urgencyLevel }: ResultsScreenProps) {
   const { lang, t } = useLang();
 
   // --- HP-04: tag filter state -------------------------------------------
@@ -85,9 +88,16 @@ export function ResultsScreen({ hospitals, insurer, setInsurer, convenio, setCon
         {/* Hospital list — now uses `filtered` instead of `hospitals` */}
         <div className="flex flex-col gap-3">
           {filtered.map((h) => (
-            <HospitalCard key={h.id} hospital={h} insurer={insurer} isExpanded={expanded === h.id}
+            <HospitalCard
+              key={h.id}
+              hospital={h}
+              insurer={insurer}
+              isExpanded={expanded === h.id}
               onToggleExpand={() => setExpanded(expanded === h.id ? null : h.id)}
-              onRequestAppt={() => onRequestAppt(h.id)} />
+              onRequestAppt={() => onRequestAppt(h.id)}
+              categoryId={categoryId}
+              urgencyLevel={urgencyLevel}
+            />
           ))}
           {filtered.length === 0 && (
             <div className="text-center py-12">
