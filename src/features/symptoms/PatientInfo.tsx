@@ -4,17 +4,14 @@ import { useLang } from "@/i18n";
 import { RISK_FACTORS } from "@/data/redFlags";
 
 interface Props {
-  age: string;
-  setAge: (v: string) => void;
-  sex: string | null;
-  setSex: (v: string) => void;
-  hasInsurance: boolean | null;
-  setHasInsurance: (v: boolean) => void;
-  riskFactors: string[];
-  onToggleRisk: (id: string) => void;
+  age: string; setAge: (v: string) => void;
+  sex: string | null; setSex: (v: string) => void;
+  hasInsurance: boolean | null; setHasInsurance: (v: boolean) => void;
+  riskFactors: string[]; onToggleRisk: (id: string) => void;
+  categoryId?: string | null;
 }
 
-export function PatientInfo({ age, setAge, sex, setSex, hasInsurance, setHasInsurance, riskFactors, onToggleRisk }: Props) {
+export function PatientInfo({ age, setAge, sex, setSex, hasInsurance, setHasInsurance, riskFactors, onToggleRisk, categoryId }: Props) {
   const { lang, t } = useLang();
 
   return (
@@ -31,22 +28,16 @@ export function PatientInfo({ age, setAge, sex, setSex, hasInsurance, setHasInsu
             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-hp-green"
           />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-hp-dark mb-3">{t.sex}</p>
-          <div className="flex gap-1.5">
-            {([["male", t.male], ["female", t.female]] as [string, string][]).map(([v, l]) => (
-              <button
-                key={v}
-                onClick={() => setSex(v)}
-                className={`flex-1 text-[11px] px-1 py-3 rounded-xl border-2 font-medium ${
-                  sex === v ? "border-hp-green bg-hp-green-light text-hp-green-dark" : "border-gray-200 bg-white text-hp-gray"
-                }`}
-              >
-                {l}
-              </button>
-            ))}
+        {categoryId !== "gyne" && (
+          <div>
+            <p className="text-sm font-semibold text-hp-dark mb-3">{t.sex}</p>
+            <div className="flex gap-1.5">
+              {([["male", t.male], ["female", t.female]] as [string, string][]).map(([v, l]) => (
+                <button key={v} onClick={() => setSex(v)} className={`flex-1 text-[11px] px-1 py-3 rounded-xl border-2 font-medium ${sex === v ? "border-hp-green bg-hp-green-light text-hp-green-dark" : "border-gray-200 bg-white text-hp-gray"}`}>{l}</button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Risk factors */}
