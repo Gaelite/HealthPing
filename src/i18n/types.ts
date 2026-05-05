@@ -1,8 +1,7 @@
 export type Lang = "es" | "en";
 
 export interface Translations {
-  h1a: string; h1b: string;
-  sub: string;
+  h1a: string; h1b: string; sub: string;
   cta1: string; cta2: string; cta3: string;
   stat1: string; stat1l: string; stat2: string; stat2l: string; stat3: string; stat3l: string;
   howLabel: string; howTitle: string;
