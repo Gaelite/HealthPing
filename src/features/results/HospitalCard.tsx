@@ -11,8 +11,8 @@ interface HospitalCardProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onRequestAppt: () => void;
-  categoryId?: string | null;      // add
-  urgencyLevel?: UrgencyLevel;     // add
+  categoryId?: string | null; 
+  urgencyLevel?: UrgencyLevel;     
 }
 
 export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand, onRequestAppt, categoryId, urgencyLevel }: HospitalCardProps) {  const { lang, t } = useLang();
@@ -54,7 +54,6 @@ export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand,
         <div className="border-t border-gray-100 p-5 bg-hp-light/50 rounded-b-2xl">
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
-              <p className="text-xs font-semibold text-hp-dark mb-3">{t.included}</p>
               {(() => {
                 const items = categoryId && urgencyLevel
                   ? getRelevantDesglose(h.dsg[lang], categoryId, urgencyLevel)
@@ -72,20 +71,12 @@ export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand,
                         <div>
                           <p className="text-xs font-semibold text-hp-dark mb-3">{t.included}</p>
                           {included.map((d) => (
-                            <div key={d.n} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
-                              <span className="text-xs text-hp-gray flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-hp-green" />{d.n}</span>
-                              <span className="text-xs font-semibold text-hp-dark">{d.p}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {extras.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-hp-dark mb-3">{t.mayIncrease}</p>
-                          {extras.map((d) => (
-                            <div key={d.n} className="flex justify-between py-1.5 border-b border-gray-100 last:border-0">
-                              <span className="text-xs text-hp-gray flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-hp-amber" />{d.n}</span>
-                              <span className="text-xs font-semibold text-hp-dark">{d.p}</span>
+                            <div key={d.n} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
+                              <span className="text-xs text-hp-gray flex items-center gap-2 flex-1 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-hp-green flex-shrink-0" />
+                                {d.n}
+                              </span>
+                              <span className="text-xs font-semibold text-hp-dark ml-2">{d.p}</span>
                             </div>
                           ))}
                         </div>
