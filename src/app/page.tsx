@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { LangProvider, useLang } from "@/i18n";
 import { HOSPITALS } from "@/data/hospitals";
-import { BODY_ZONES } from "@/data/constants";
+import { CATEGORIES } from "@/data/categories";
 import type { ServiceCategory, EnrichedHospital } from "@/data/types";
 import { getDistance, requestGeolocation } from "@/lib/geo";
 import { sendConfirmationEmail } from "@/lib/emailjs";
@@ -15,7 +15,7 @@ import { InsuranceSelector } from "@/features/insurance/InsuranceSelector";
 import { ResultsScreen } from "@/features/results/ResultsScreen";
 import { AppointmentForm, ConfirmationScreen } from "@/features/appointment/AppointmentFlow";
 import { SurgeryComingSoon } from "@/features/surgery/SurgeryComingSoon";
-import { calculateUrgency, UrgencyResult, type ScoringInput } from "@/data/scoring";
+import { calculateUrgency, type UrgencyResult, type ScoringInput } from "@/data/scoring";
 
 type Screen = "home" | "symptoms" | "insurance" | "results" | "appointment" | "surgery";
 
@@ -25,11 +25,12 @@ function AppContent() {
   // ── Screen navigation ──
   const [screen, setScreen] = useState<Screen>("home");
 
-  // ── Symptom state ──
-  const [zone, setZone] = useState<string | null>(null);
-  const [pain, setPain] = useState(5);
-  const [extra, setExtra] = useState<string[]>([]);
-  const [since, setSince] = useState<string | null>(null);
+  // ── Symptom engine state ──
+  const [category, setCategory] = useState<string | null>(null);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [painScore, setPainScore] = useState(0);
+  const [redFlagIds, setRedFlagIds] = useState<string[]>([]);
+  const [riskFactorIds, setRiskFactorIds] = useState<string[]>([]);
   const [age, setAge] = useState("");
   const [sex, setSex] = useState<string | null>(null);
   const [hasInsurance, setHasInsurance] = useState<boolean | null>(null);
@@ -59,12 +60,12 @@ function AppContent() {
   // ── Navigation handlers ──
   const goHome = () => { setScreen("home"); setExpanded(null); setApptCode(null); };
 
-  // ── Symptom engine state ──
-  const [category, setCategory] = useState<string | null>(null);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
-  const [painScore, setPainScore] = useState(0);
-  const [redFlagIds, setRedFlagIds] = useState<string[]>([]);
-  const [riskFactorIds, setRiskFactorIds] = useState<string[]>([]);
+  const geoAndGoResults = useCallback(() => {
+    setScreen("results");
+    requestGeolocation().then((loc) => {
+      if (loc) { setUserLat(loc.lat); setUserLng(loc.lng); }
+    });
+  }, []);
 
   const afterSymptoms = () => {
     const input: ScoringInput = { symptoms, painScore, redFlagIds, riskFactorIds, categoryId: category || "" };
@@ -73,14 +74,6 @@ function AppContent() {
     if (hasInsurance) setScreen("insurance");
     else geoAndGoResults();
   };
-
-  const geoAndGoResults = useCallback(() => {
-    setScreen("results");
-    // Request location in background, doesn't block navigation
-    requestGeolocation().then((loc) => {
-      if (loc) { setUserLat(loc.lat); setUserLng(loc.lng); }
-    });
-  }, []);
 
   const startAppointment = (hospitalId: number) => {
     setSelectedHospitalId(hospitalId);
@@ -101,7 +94,7 @@ function AppContent() {
           patientName: apptName,
           patientEmail: apptEmail,
           patientPhone: apptPhone,
-          symptomDescription: apptDesc || zone || "-",
+          symptomDescription: apptDesc || category || "-",
         }),
       });
       const data = await response.json();
@@ -132,8 +125,8 @@ function AppContent() {
   }, []);
 
   // ── Data enrichment ──
-  const neededServices: ServiceCategory[] = zone
-    ? (BODY_ZONES.find((z) => z.id === zone)?.needs || [])
+  const neededServices: ServiceCategory[] = category
+    ? (CATEGORIES.find((c) => c.id === category)?.needs || [])
     : [];
 
   const enrichedHospitals: EnrichedHospital[] = HOSPITALS.map((h) => ({
@@ -158,6 +151,10 @@ function AppContent() {
     if (sortBy === "transparency") return b.tr - a.tr;
     return 0;
   });
+
+  const finalHospitals = urgencyResult && !urgencyResult.canShowPharmacy
+    ? sortedHospitals.filter((h) => h.type !== "pharmacy")
+    : sortedHospitals;
 
   const selectedHospital = HOSPITALS.find((h) => h.id === selectedHospitalId);
 
@@ -203,7 +200,7 @@ function AppContent() {
 
       {screen === "results" && !apptCode && (
         <ResultsScreen
-          hospitals={sortedHospitals}
+          hospitals={finalHospitals}
           insurer={insurer} setInsurer={setInsurer}
           convenio={convenio} setConvenio={setConvenio}
           sortBy={sortBy} setSortBy={setSortBy}

@@ -60,9 +60,7 @@ export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand,
                   : h.dsg[lang].map((d) => ({ ...d, relevant: true }));
 
                 const relevant = items.filter((d) => d.relevant);
-                const notRelevant = items.filter((d) => !d.relevant);
                 const included = relevant.filter((d) => d.i);
-                const extras = relevant.filter((d) => !d.i);
 
                 return (
                   <>
@@ -82,21 +80,7 @@ export function HospitalCard({ hospital: h, insurer, isExpanded, onToggleExpand,
                         </div>
                       )}
                     </div>
-                    {notRelevant.length > 0 && (
-                      <details className="mt-3">
-                        <summary className="text-[11px] text-hp-gray cursor-pointer hover:text-hp-blue">
-                          {lang === "es" ? `+ ${notRelevant.length} servicios no relacionados con tu caso` : `+ ${notRelevant.length} services not related to your case`}
-                        </summary>
-                        <div className="mt-2 space-y-1">
-                          {notRelevant.map((d) => (
-                            <div key={d.n} className="flex justify-between py-1 opacity-50">
-                              <span className="text-[11px] text-hp-gray">{d.n}</span>
-                              <span className="text-[11px] text-hp-gray">{d.p}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </details>
-                    )}
+                    
                   </>
                 );
               })()}

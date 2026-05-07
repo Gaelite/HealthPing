@@ -34,8 +34,8 @@ export interface RiskFactor {
 
 /** Risk factors that elevate priority even with moderate symptoms */
 export const RISK_FACTORS: RiskFactor[] = [
-  { id: "elderly",       label: { es: "Adulto mayor (65+)", en: "Elderly (65+)" },           weight: 2 },
-  { id: "infant",        label: { es: "Bebé o niño pequeño", en: "Baby or small child" },    weight: 2 },
+  // { id: "elderly",       label: { es: "Adulto mayor (65+)", en: "Elderly (65+)" },           weight: 2 },
+  // { id: "infant",        label: { es: "Bebé o niño pequeño", en: "Baby or small child" },    weight: 2 },
   { id: "pregnant",      label: { es: "Embarazo", en: "Pregnancy" },                         weight: 2 },
   { id: "immunosup",     label: { es: "Inmunosupresión", en: "Immunosuppressed" },           weight: 2 },
   { id: "heart_disease", label: { es: "Cardiopatía", en: "Heart disease" },                  weight: 2 },
